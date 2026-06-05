@@ -64,10 +64,9 @@ def upload_file():
         excel_filename = f"{base_name}_reporte.xlsx"
         excel_path = os.path.join(app.config['OUTPUT_FOLDER'], excel_filename)
         
-        # Procesa el ZIP
-        processor = ZIPProcessor()
-        success, message, stats = processor.process_zip(zip_path, excel_path)
-        
+        # Procesa el ZIP 
+        procesador = ZIPProcessor()
+        exito, mensaje, estadisticas = procesador.process_zip(ruta_zip, ruta_excel)
         # Limpia el archivo ZIP después de procesar
         try:
             os.remove(zip_path)
