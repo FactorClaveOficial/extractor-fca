@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Extractor CFDI - FCA</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f8f9ff;
+            margin-bottom: 30px;
+        }
+
+        .upload-area:hover {
+            border-color: #764ba2;
+            background: #f0f2ff;
+        }
+
+        .upload-area.dragover {
+            border-color: #764ba2;
+            background: #e8ebf8;
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        .upload-area h2 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+
+        .upload-area p {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .upload-area .small-text {
+            color: #999;
+            font-size: 12px;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            justify-content: center;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-upload {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            flex: 1;
+            max-width: 200px;
+        }
+
+        .btn-upload:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .progress-container {
+            margin-bottom: 30px;
+            display: none;
+        }
+
+        .progress-container.active {
+            display: block;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            color: #666;
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .result-container {
+            margin-bottom: 30px;
+            padding: 20px;
+            border-radius: 8px;
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+
+        .result-container.active {
+            display: block;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result-container.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .result-container.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .result-container h3 {
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .result-container p {
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .stats {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+            font-size: 13px;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .btn-download {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            width: 100%;
+            margin-top: 15px;
+        }
+
+        .btn-download:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #667eea;
+            border-top: 3px solid #764ba2;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .features {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .features h3 {
+            color: #333;
+            font-size: 14px;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .feature-list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            color: #666;
+            font-size: 13px;
+        }
+
+        .feature-item::before {
+            content: "✓";
+            color: #667eea;
+            font-weight: bold;
+            margin-right: 10px;
+            font-size: 16px;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .upload-area {
+                padding: 30px 20px;
+            }
+
+            .upload-icon {
+                font-size: 40px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Extractor CFDI</h1>
+            <p>Extrae facturas de ZIP y genera reportes en Excel</p>
+        </div>
+
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">📁</div>
+            <h2>Arrastra tu ZIP aquí</h2>
+            <p>o</p>
+            <button class="btn-upload" type="button" id="uploadBtn">Seleccionar archivo</button>
+            <p class="small-text">Máximo 500 MB</p>
+            <input type="file" id="fileInput" accept=".zip" />
+        </div>
+
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-text">
+                <span class="loading-spinner"></span>
+                Procesando archivo...
+            </div>
+        </div>
+
+        <div class="result-container" id="resultContainer">
+            <h3 id="resultTitle"></h3>
+            <p id="resultMessage"></p>
+            <div class="stats" id="resultStats"></div>
+            <button class="btn-download" id="downloadBtn" style="display: none;">
+                ⬇️ Descargar Excel
+            </button>
+        </div>
+
+        <div class="features">
+            <h3>Características:</h3>
+            <div class="feature-list">
+                <div class="feature-item">Extrae múltiples XMLs de ZIPs</div>
+                <div class="feature-item">Genera 4 pestañas: Encabezados, Conceptos, Impuestos y Timbres</div>
+                <div class="feature-item">Interfaz moderna y fácil de usar</div>
+                <div class="feature-item">Descarga automática de reportes</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressFill = document.getElementById('progressFill');
+        const resultContainer = document.getElementById('resultContainer');
+        const resultTitle = document.getElementById('resultTitle');
+        const resultMessage = document.getElementById('resultMessage');
+        const resultStats = document.getElementById('resultStats');
+        const downloadBtn = document.getElementById('downloadBtn');
+        let currentExcelFile = null;
+
+        // Evento para seleccionar archivo
+        uploadBtn.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', handleFileSelect);
+
+        // Eventos drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                handleFileSelect();
+            }
+        });
+
+        // Maneja la selección de archivo
+        function handleFileSelect() {
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            if (file.type !== 'application/zip' && !file.name.endsWith('.zip')) {
+                showError('Por favor selecciona un archivo ZIP válido');
+                return;
+            }
+
+            uploadFile(file);
+        }
+
+        // Sube el archivo
+        function uploadFile(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            // Muestra progreso
+            progressContainer.classList.add('active');
+            resultContainer.classList.remove('active');
+
+            // Simula progreso mientras se sube
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                if (progress < 90) {
+                    progress += Math.random() * 30;
+                    progressFill.style.width = progress + '%';
+                }
+            }, 200);
+
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                clearInterval(progressInterval);
+                progressFill.style.width = '100%';
+
+                if (!response.ok) {
+                    return response.json().then(data => {
+                        throw new Error(data.error || 'Error desconocido');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                setTimeout(() => {
+                    progressContainer.classList.remove('active');
+                    showSuccess(data.message, data.stats, data.excel_file);
+                }, 500);
+            })
+            .catch(error => {
+                clearInterval(progressInterval);
+                progressContainer.classList.remove('active');
+                showError(error.message);
+            });
+        }
+
+        // Muestra resultado exitoso
+        function showSuccess(message, stats, excelFile) {
+            resultContainer.classList.add('active', 'success');
+            resultContainer.classList.remove('error');
+            resultTitle.textContent = '✅ Procesamiento exitoso';
+            resultMessage.textContent = message;
+            
+            // Muestra estadísticas
+            let statsHtml = '<div class="stat-item"><span>Archivos XML encontrados:</span><strong>' + stats.xml_files_found + '</strong></div>';
+            statsHtml += '<div class="stat-item"><span>Archivos procesados:</span><strong>' + stats.xml_files_processed + '</strong></div>';
+            statsHtml += '<div class="stat-item"><span>Archivos con error:</span><strong>' + stats.xml_files_failed + '</strong></div>';
+            statsHtml += '<div class="stat-item"><span>Excel generado:</span><strong>' + (stats.excel_generated ? 'Sí' : 'No') + '</strong></div>';
+            resultStats.innerHTML = statsHtml;
+            
+            // Muestra botón de descarga
+            currentExcelFile = excelFile;
+            downloadBtn.style.display = 'block';
+            
+            // Reset
+            fileInput.value = '';
+            progressFill.style.width = '0%';
+        }
+
+        // Muestra error
+        function showError(message) {
+            resultContainer.classList.add('active', 'error');
+            resultContainer.classList.remove('success');
+            resultTitle.textContent = '❌ Error';
+            resultMessage.textContent = message;
+            resultStats.innerHTML = '';
+            downloadBtn.style.display = 'none';
+            fileInput.value = '';
+            progressFill.style.width = '0%';
+        }
+
+        // Descarga el Excel
+        downloadBtn.addEventListener('click', () => {
+            if (currentExcelFile) {
+                window.location.href = `/download/${currentExcelFile}`;
+            }
+        });
+    </script>
+</body>
+</html>
